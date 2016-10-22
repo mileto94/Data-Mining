@@ -29,8 +29,14 @@ class TestCreateStates(unittest.TestCase):
 class TestDFSFrogs(unittest.TestCase):
     def test_empty_equal_start_and_end(self):
         n = 0
-        count, start, end = create_state(0)
+        count, start, end = create_state(n)
         self.assertTrue(dfs(start, end=end))
+        self.assertEqual(count, n)
+
+    def test_equal_start_and_end(self):
+        n = 1
+        count, start, end = create_state(n * 2)
+        self.assertTrue(dfs(start, end=start))
         self.assertEqual(count, n)
 
     def test_with_one_frog(self):
