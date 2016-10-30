@@ -1,13 +1,12 @@
 from math import sqrt  # noqa
 from heapq import heappush, heappop
-
+from time import time
 
 VISITED = set()
-PATH = []
 HEAP = []
 
 
-class State():  # noqa
+class State:
     def __init__(self, arr):  # noqa
         self.elements = arr
         self.directions = []
@@ -34,8 +33,6 @@ class State():  # noqa
 
     @property
     def dict(self):
-        row_length = int(sqrt(len(self.elements)))
-        # return {item: i for i, item in enumerate(self.elements)}
         return {item: (i // 3, i % 3) for i, item in enumerate(self.elements)}
 
     @property
@@ -85,7 +82,6 @@ def generate_children(state, end):
 
 def g(state):
     """Return cost of the path till the current state."""
-    # return PATH_COST + 1
     return state.path
 
 
@@ -93,38 +89,51 @@ def h(state, end):
     """Return heuristic estimation from current state to goal."""
     state_dict = state.dict
     end_dict = end.dict
-    # return sum([abs(value - state_dict[key]) for key, value in end_dict.items()])  # noqa
-    return sum([abs(value[0] - state_dict[key][0]) + abs(value[1] - state_dict[key][1]) for key, value in end_dict.items()])  # noqa
+    return sum([
+        abs(value[0] - state_dict[key][0]) + abs(value[1] - state_dict[key][1])
+        for key, value in end_dict.items()])
 
 
 def get_estimation(state, end):
     """Get estimate for the current state."""
-    res = h(state, end) + g(state)
-    return res
+    return h(state, end) + g(state)
 
 
 def a_star(state, end):
     """Implement A* algorithm."""
     if state.str == end.str:
-        return 0
+        return state
     VISITED.add(state.str)
     generate_children(state, end)
     while HEAP:
         _, current_state = heappop(HEAP)
         if current_state.str in VISITED: continue
-        print('current: ', current_state)
         VISITED.add(current_state.str)
-        PATH.append(current_state)
         if current_state.str == end.str:
             return current_state
         generate_children(current_state, end)
     return False
 
 
-def main():
+def read_user_input():
+    """Read user input."""
+    number = int(input('Enter count of non-zero elements in block: '))
+    row_length = int(sqrt(number + 1))
+    print('Fill in the block by entering each row on new line and numbers separated by " "(space).')  # noqa
+    rows = []
+    for row_index in range(row_length):
+        rows.extend(map(int, input().split(' ')))
+    end = list(range(1, number + 1))
+    end.append(0)
+    return number, State(rows), State(end)
+
+
+def call_a_star():
     """Call A*."""
-    start = State([1, 2, 3, 4, 5, 6, 0, 7, 8])  # 2
-    end = State([1, 2, 3, 4, 5, 6, 7, 8, 0])
+    n, start, end = read_user_input()
+    s = time()
+    # start = State([1, 2, 3, 4, 5, 6, 0, 7, 8])  # 2
+    # end = State([1, 2, 3, 4, 5, 6, 7, 8, 0])
     # start = State([2, 3, 6, 1, 5, 8, 4, 7, 0])  # 8
     # start = State([6, 5, 3, 2, 4, 8, 7, 0, 1])  # 21
     # start = State([8, 7, 0, 2, 5, 6, 3, 4, 1])  # 30 INFINITY
@@ -132,15 +141,15 @@ def main():
     # start = State([8, 1, 3, 5, 6, 7, 2, 4, 0])  # 18
     # start = State([0, 1, 2, 7, 4, 6, 8, 5, 3])  # 16
     # start = State([2, 7, 8, 6, 0, 1, 3, 5, 4])  # 26
-    start = State([1, 8, 7, 4, 0, 5, 6, 3, 2])  # 22
+    # start = State([1, 8, 7, 4, 0, 5, 6, 3, 2])  # 22
+    # start = State([2, 1, 8, 5, 0, 6, 7, 3, 4])  # 22
     solution = a_star(start, end)
     if solution:
         print(solution.path)
         print(solution.directions)
-        print('directions: ', len(solution.directions))
     else:
         print('Sorry. Unable to find a solution...')
-
+    print('TIME: {}ms'.format((time() - s) * 1000))
 
 if __name__ == '__main__':
-    main()
+    call_a_star()
