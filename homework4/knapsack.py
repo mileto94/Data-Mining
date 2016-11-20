@@ -52,9 +52,14 @@ def generate_pop(items, population=[]):
 
 
 def fitness_function(items, m):
-    """Return sum of weight for child or 0(if sum > m)."""
-    priority = sum([key[0] for key, is_selected in items.items() if is_selected])
-    res = priority if priority <= m else 0
+    """Return sum of cost for child if weight < m otherwise return 0."""
+    cost = 0
+    weight = 0
+    for key, is_selected in items.items():
+        if is_selected:
+            weight += key[0]
+            cost += key[1]
+    res = cost if weight <= m else 0
     return res
 
 
@@ -67,7 +72,6 @@ def do_crossover(population):
     f_vals = list(first.values())
     s_vals = list(second.values())
     keys = list(first.keys())
-    print("RAND INDEX:", rand_index)
     child1 = f_vals[0:rand_index] + s_vals[rand_index:]
     child2 = s_vals[0:rand_index] + f_vals[rand_index:]
     return [
@@ -110,16 +114,20 @@ def is_solution(population, m, n):
     return False
 
 
-def select_parents(population):
+def select_parents(population, m):
+    fitness_population = sorted(
+            population,
+            key=lambda child: fitness_function(child, m),
+            reverse=True)
     ordered_population = []
-    total_cost = get_population_cost(population)
-    for item in population:
+    total_cost = get_population_cost(fitness_population)
+    for item in fitness_population:
         item_cost = get_population_cost([item])
         percentage = item_cost / total_cost
         rand_num = random()
         if percentage > rand_num:
             ordered_population.append(item)
-    return ordered_population
+    return ordered_population if ordered_population else fitness_population
 
 
 def pseudo_user():
@@ -165,25 +173,27 @@ def knapsack(items, m, n):
     i = 0
     while i < MAX_ITERATIONS:
         # sorted population
-        population = sorted(
-            population,
-            key=lambda child: fitness_function(child, m),
-            reverse=True)
-        total_value = is_solution(population, m, n)
-        if total_value:
-            print('Found solution: {}'.format(population[0]))
-            return total_value
+        # population = sorted(
+        #     population,
+        #     key=lambda child: fitness_function(child, m),
+        #     reverse=True)
 
-        selected_items = select_parents(population)
+        # selected parents
+        population = select_parents(population, m)
 
         # the best couple of items
-        population = do_crossover(selected_items[:2])
+        population = do_crossover(population[:2])
 
         # Step 5
         population = generate_pop(items, population=population)
 
         # Step 6:
         population = mutate_population(population, m)
+
+        total_value = is_solution(population, m, n)
+        if total_value:
+            print('Found solution: {}'.format(population[0]))
+            return total_value
 
     print('No solution found...')
     return False
