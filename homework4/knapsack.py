@@ -15,7 +15,6 @@ def read_user_input():  # noqa
     global MAX_POPULATION
     """Read user input.
     result:
-    items = [(b1, v1), (b2, v2), ... , (bi, vi)]
     items = {
         (w1, v1): 0,  # not selected
         (w2, v2): 1,  # selected
@@ -34,7 +33,6 @@ def read_user_input():  # noqa
 
 
 def generate_pop(items, population=[]):
-    # WORKS
     i = MAX_POPULATION
     while len(population) < MAX_POPULATION and i > 0:
         new_child = OrderedDict([(item, randint(0, 1)) for item in items.keys()])
@@ -47,7 +45,6 @@ def generate_pop(items, population=[]):
 
 
 def fitness_function(items, m):
-    # WORKS
     """Return sum of weight for child or 0(if sum > m)."""
     priority = sum([key[0] for key, is_selected in items.items() if is_selected])
     res = priority if priority <= m else 0
