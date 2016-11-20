@@ -43,7 +43,7 @@ def generate_population(items, m, n):
     population = []
     children_count = 0
     while children_count < MAX_POPULATION:
-        new_child = items.copy()
+        new_child = deepcopy(items)
         for key, sel in items.items():
             if key[0] + current_weight <= m:
                 # new_child = items.copy()
@@ -66,7 +66,7 @@ def generate_pop(items, population=[]):
     while len(population) < MAX_POPULATION and i > 0:
         new_child = OrderedDict([(item, randint(0, 1)) for item in items.keys()])
         total_value = sum([sel for sel in new_child.values()])
-        if new_child not in population and total_value:
+        if new_child not in population and total_value and new_child not in GENERATIONS:
             population.append(new_child)
         else:
             i -= 1
@@ -87,6 +87,8 @@ def fitness_function(items, m):
 
 def do_crossover(population):
     """Do crossover matching."""
+    if len(population) < 2:
+        return population
     first, second = population
     rand_index = randint(1, len(first))
     f_vals = list(first.values())
@@ -120,8 +122,6 @@ def mutate_population(population, m):
                 print('Mutate', new_population[i][key])
                 new_population[i][key] = int(not sel)
                 print('Mutated >>', new_population[i][key])
-    print("mutation_prob", mutation_prob)
-    print(new_population == population)
     return new_population
 
 
@@ -129,7 +129,7 @@ def is_solution(population, m, n):
     global GENERATIONS
     current_best = population[0]
     GENERATIONS.append(current_best)
-    if len(GENERATIONS) < 10:
+    if len(GENERATIONS) < 25:
         print('GENERATIONS', GENERATIONS)
         return False
     print(GENERATIONS)
