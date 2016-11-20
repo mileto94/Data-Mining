@@ -12,6 +12,7 @@ GENERATIONS = []
 POPULATION_COUNTER = 20
 from time import time
 
+
 def read_user_input():  # noqa
     global MAX_POPULATION
     """Read user input.
@@ -27,8 +28,8 @@ def read_user_input():  # noqa
     print('Fill in the items by entering each item (benefit, cost) on new line and numbers separated by " "(space).')  # noqa
     items = OrderedDict()
     for item in range(n):
-        item = map(int, input().split(' '))
-        items[tuple(item[1], item[0])] = 0
+        item = list(map(int, input().split(' ')))
+        items[tuple(item[::-1])] = 0
     MAX_POPULATION = round(sqrt(n))
     return items, m, n
 
@@ -230,7 +231,8 @@ def knapsack(items, m, n):
 
 
 def main():
-    items, m, n = pseudo_user1()
+    # items, m, n = pseudo_user1()
+    items, m, n = read_user_input()
     start = time()
     print(knapsack(items, m, n))
     print((time() - start)*1000, 's')
