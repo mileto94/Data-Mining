@@ -29,35 +29,8 @@ def read_user_input():  # noqa
     for item in range(n):
         item = map(int, input().split(' '))
         items[tuple(item[1], item[0])] = 0
-    print('M: {}'.format(m))
-    print('N: {}'.format(n))
-    print('Items: {}'.format(items))
     MAX_POPULATION = round(sqrt(n))
     return items, m, n
-
-
-def generate_population(items, m, n):
-    # DOESN'T WORK
-    """Generate new child."""
-    current_weight = 0
-    population = []
-    children_count = 0
-    while children_count < MAX_POPULATION:
-        new_child = deepcopy(items)
-        for key, sel in items.items():
-            if key[0] + current_weight <= m:
-                # new_child = items.copy()
-                new_child[key] = 1
-                current_weight += key[0]
-            else:
-                break
-        population.append(new_child)
-        children_count += 1
-        current_weight = 0
-    print(population)
-
-    selected_idx = set([randint(0, n) for i in range(n)])
-    return selected_idx
 
 
 def generate_pop(items, population=[]):
@@ -77,11 +50,7 @@ def fitness_function(items, m):
     # WORKS
     """Return sum of weight for child or 0(if sum > m)."""
     priority = sum([key[0] for key, is_selected in items.items() if is_selected])
-    print(items)
-    print('priority', priority)
     res = priority if priority <= m else 0
-    print('res', res)
-    print('=================================================')
     return res
 
 
@@ -95,12 +64,8 @@ def do_crossover(population):
     s_vals = list(second.values())
     keys = list(first.keys())
     print("RAND INDEX:", rand_index)
-    # print('f_keys', f_vals)
-    # print('s_keys', s_vals)
     child1 = f_vals[0:rand_index] + s_vals[rand_index:]
     child2 = s_vals[0:rand_index] + f_vals[rand_index:]
-    # print(f_vals, '-> child1', child1)
-    # print(s_vals, '-> child2', child2)
     return [
         OrderedDict([(keys[i], child1[i]) for i in range(len(keys))]),
         OrderedDict([(keys[i], child2[i]) for i in range(len(keys))])
@@ -119,9 +84,7 @@ def mutate_population(population, m):
         for key, sel in child.items():
             mutation_prob = random()
             if mutation_prob <= MUTATION_PROPABILITY and child != best:
-                print('Mutate', new_population[i][key])
                 new_population[i][key] = int(not sel)
-                print('Mutated >>', new_population[i][key])
     return new_population
 
 
@@ -130,9 +93,7 @@ def is_solution(population, m, n):
     current_best = population[0]
     GENERATIONS.append(current_best)
     if len(GENERATIONS) < 25:
-        print('GENERATIONS', GENERATIONS)
         return False
-    print(GENERATIONS)
     best = sorted(
         GENERATIONS,
         key=lambda child: fitness_function(child, m),
@@ -185,8 +146,6 @@ def knapsack(items, m, n):
     7. CYCLE Again
     """
     population = generate_pop(items, population=[])
-    print(population)
-    print('-----------------')
     i = 0
     while i < MAX_ITERATIONS:
         # sorted population
@@ -198,22 +157,15 @@ def knapsack(items, m, n):
         if total_value:
             print('Found solution: {}'.format(population[0]))
             return total_value
-        print(population)
 
         # the best couple of items
         population = do_crossover(population[:2])
-        print('CHILDREN WITH PARENTS')
-        print(population)
 
         # Step 5
         population = generate_pop(items, population=population)
-        print('POPULATION')
-        print(population)
 
         # Step 6:
         population = mutate_population(population, m)
-
-        print(GENERATIONS)
 
     print('No solution found...')
     return False
