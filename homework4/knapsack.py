@@ -32,6 +32,13 @@ def read_user_input():  # noqa
     return items, m, n
 
 
+def get_population_cost(population):
+    res = 0
+    for item in population:
+        res += sum([k[1] for k in item.keys()])
+    return res
+
+
 def generate_pop(items, population=[]):
     i = MAX_POPULATION
     while len(population) < MAX_POPULATION and i > 0:
@@ -103,6 +110,18 @@ def is_solution(population, m, n):
     return False
 
 
+def select_parents(population):
+    ordered_population = []
+    total_cost = get_population_cost(population)
+    for item in population:
+        item_cost = get_population_cost([item])
+        percentage = item_cost / total_cost
+        rand_num = random()
+        if percentage > rand_num:
+            ordered_population.append(item)
+    return ordered_population
+
+
 def pseudo_user():
     global MAX_POPULATION
     items = OrderedDict({(2, 3): 0, (5, 1): 0, (3, 2): 0})
@@ -155,8 +174,10 @@ def knapsack(items, m, n):
             print('Found solution: {}'.format(population[0]))
             return total_value
 
+        selected_items = select_parents(population)
+
         # the best couple of items
-        population = do_crossover(population[:2])
+        population = do_crossover(selected_items[:2])
 
         # Step 5
         population = generate_pop(items, population=population)
