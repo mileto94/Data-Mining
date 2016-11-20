@@ -9,7 +9,8 @@ MAX_POPULATION = 100
 MUTATION_PROPABILITY = 0.05
 MAX_ITERATIONS = 1000
 GENERATIONS = []
-
+POPULATION_COUNTER = 20
+from time import time
 
 def read_user_input():  # noqa
     global MAX_POPULATION
@@ -40,6 +41,7 @@ def get_population_cost(population):
 
 
 def generate_pop(items, population=[]):
+    global POPULATION_COUNTER
     i = MAX_POPULATION
     while len(population) < MAX_POPULATION and i > 0:
         new_child = OrderedDict([(item, randint(0, 1)) for item in items.keys()])
@@ -48,6 +50,9 @@ def generate_pop(items, population=[]):
             population.append(new_child)
         else:
             i -= 1
+    POPULATION_COUNTER -= 1
+    if POPULATION_COUNTER == 0:
+        print('20th population', population)
     return population
 
 
@@ -100,10 +105,10 @@ def is_solution(population, m, n):
     global GENERATIONS
     current_best = population[0]
     GENERATIONS.append(current_best)
-    if len(GENERATIONS) < 25:
+    if len(GENERATIONS) < 30:
         return False
     best = sorted(
-        GENERATIONS,
+        population,
         key=lambda child: fitness_function(child, m),
         reverse=True)[0]
     selected = [item for item, sel in best.items() if sel]
@@ -141,9 +146,34 @@ def pseudo_user():
 
 def pseudo_user1():
     global MAX_POPULATION
-    items = OrderedDict({(1, 11): 0, (21, 31): 0, (23, 33): 0, (33, 43): 0, (43, 53): 0, (45, 55): 0, (55, 65): 0})
-    m = 110
-    n = 7
+    items = OrderedDict({
+        (90, 150): 0,
+        (130, 35): 0,
+        (1530, 200): 0,
+        (500, 160): 0,
+        (150, 60): 0,
+        (680, 45): 0,
+        (270, 60): 0,
+        (390, 40): 0,
+        (230, 30): 0,
+        (520, 10): 0,
+        (110, 70): 0,
+        (320, 30): 0,
+        (240, 15): 0,
+        (480, 10): 0,
+        (730, 40): 0,
+        (420, 70): 0,
+        (430, 75): 0,
+        (220, 80): 0,
+        (70, 20): 0,
+        (180, 12): 0,
+        (40, 50): 0,
+        (300, 10): 0,
+        (900, 1): 0,
+        (2000, 150): 0
+    })
+    m = 5000
+    n = 24
     MAX_POPULATION = n
     return items, m, n
 
@@ -200,9 +230,10 @@ def knapsack(items, m, n):
 
 
 def main():
-    items, m, n = pseudo_user2()
+    items, m, n = pseudo_user1()
+    start = time()
     print(knapsack(items, m, n))
-
+    print((time() - start)*1000, 's')
 
 if __name__ == '__main__':
     main()
