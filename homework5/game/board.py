@@ -38,18 +38,23 @@ class Board:
             return True
         return False
 
-    def min_max(self, is_max, alpha, beta):
+    def min_max(self, player, alpha, beta):
         if self.is_game_over():
             wins = self.get_winner()
+            print(wins)
             if wins == self.comp_sign: return 1
             elif wins: return -1
             else: return 0
 
         for pos in self.get_available_moves():
-            self.fields[pos] = self.player
-            val = self.min_max(not is_max, alpha, beta)
-            self.fields[pos] = self.empty
-            if is_max:
+            self.move(*pos)
+            # self.fields[pos] = self.player
+            # self.player, self.opponent = self.opponent, self.player
+            val = self.min_max(self.opponent, alpha, beta)
+            # self.fields[pos] = self.empty
+            # self.player, self.opponent = self.opponent, self.player
+            self.move(*pos, sign=self.empty)
+            if player == self.comp_sign:
                 if val > alpha:
                     alpha = val
                 if alpha >= beta:
@@ -61,9 +66,9 @@ class Board:
                 if beta <= alpha:
                     return alpha
 
-        return alpha if is_max else beta
+        return alpha if player == self.comp_sign else beta
 
-    def get_best(self, is_max):
+    def get_best(self):
         final_res = -INFINITY
         winners = ('O-win', 'Draw', 'X-win')
 
@@ -73,9 +78,14 @@ class Board:
 
         choices = []
         for pos in positions:
-            self.fields[pos] = self.player
-            val = self.min_max(not is_max, -INFINITY, INFINITY)
-            self.fields[pos] = self.empty
+            self.move(*pos)
+            # self.fields[pos] = self.player
+            # self.player, self.opponent = self.opponent, self.player
+            val = self.min_max(self.opponent, -INFINITY, INFINITY)
+            # self.fields[pos] = self.empty
+            # self.player, self.opponent = self.opponent, self.player
+            self.move(*pos, sign=self.empty)
+
             print("move:", pos, "causes:", winners[val + 1])
             if val > final_res:
                 final_res = val
@@ -110,14 +120,15 @@ class Board:
 
         return None
 
-    def move(self, row, col):
-        if (row, col) in self.get_available_moves():
-            self.fields[row, col] = self.player
-            self.player, self.opponent = self.opponent, self.player
-            return True
-        else:
-            print('Illegal move! Try again...')
-            return False
+    def move(self, row, col, sign=None):
+        sign = sign if sign else self.player
+        # if (row, col) in self.get_available_moves():
+        self.fields[row, col] = sign
+        self.player, self.opponent = self.opponent, self.player
+        return True
+        # else:
+        #     print('Illegal move! Try again...')
+        #     return False
 
     def check_user_input(self, row, col):
         if row in range(1, 4) and col in range(1, 4) and self.fields[row - 1, col - 1] == self.empty:
@@ -126,10 +137,11 @@ class Board:
         return False
 
     def play(self, is_computer):
+
         while not self.is_game_over():
 
             if is_computer:
-                best_position = self.get_best(is_computer)
+                best_position = self.get_best()
                 print('THE BEST MOVE', best_position)
                 self.move(*best_position)
                 is_computer = False
