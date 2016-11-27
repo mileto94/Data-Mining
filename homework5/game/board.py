@@ -34,7 +34,7 @@ class Board:
         return [pos for pos, sign in self.fields.items() if sign == player]
 
     def is_game_over(self):
-        if self.get_available_moves() == 0 or self.get_winner() is not None:
+        if self.empty not in self.fields.values() or self.get_winner() is not None:
             return True
         return False
 
@@ -65,7 +65,7 @@ class Board:
 
     def get_best(self, is_max):
         final_res = -INFINITY
-        winners = ('X-win', 'Draw', 'O-win')
+        winners = ('O-win', 'Draw', 'X-win')
 
         positions = self.get_available_moves()
         if len(positions) == self.size ** 2:
@@ -82,7 +82,6 @@ class Board:
                 choices = [pos]
             elif val == final_res:
                 choices.append(pos)
-        print('Choices', choices)
         return choice(choices)
 
     # def get_winner(self):
