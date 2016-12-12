@@ -41,69 +41,55 @@ class Board:
     def min_max(self, player, alpha, beta):
         if self.is_game_over():
             wins = self.get_winner()
-            print(wins)
             if wins == self.comp_sign: return 1
             elif wins: return -1
             else: return 0
 
+        current_value = -INFINITY if player == self.comp_sign else INFINITY
         for pos in self.get_available_moves():
-            self.move(*pos)
-            # self.fields[pos] = self.player
-            # self.player, self.opponent = self.opponent, self.player
-            val = self.min_max(self.opponent, alpha, beta)
-            # self.fields[pos] = self.empty
-            # self.player, self.opponent = self.opponent, self.player
-            self.move(*pos, sign=self.empty)
             if player == self.comp_sign:
-                if val > alpha:
-                    alpha = val
-                if alpha >= beta:
-                    return beta
-
+                self.move(*pos)
+                val = self.min_max(self.opponent, alpha, beta)
+                self.move(*pos, sign=self.empty)
+                current_value = max(current_value, val)
+                if current_value >= beta:
+                    return current_value
+                alpha = max(alpha, current_value)
             else:
-                if val < beta:
-                    beta = val
-                if beta <= alpha:
-                    return alpha
+                self.move(*pos)
+                val = self.min_max(self.opponent, alpha, beta)
+                self.move(*pos, sign=self.empty)
+                current_value = min(current_value, val)
+                if current_value <= alpha:
+                    return current_value
+                beta = min(beta, current_value)
 
-        return alpha if player == self.comp_sign else beta
+        return current_value
 
     def get_best(self):
         final_res = -INFINITY
-        winners = ('O-win', 'Draw', 'X-win')
+        winners = (self.opponent, 'Draw', self.player)
 
         positions = self.get_available_moves()
         if len(positions) == self.size ** 2:
             return 1, 1
 
-        choices = []
-        for pos in positions:
+        res = [[], []]
+        for pos in self.get_available_moves():
             self.move(*pos)
-            # self.fields[pos] = self.player
-            # self.player, self.opponent = self.opponent, self.player
-            val = self.min_max(self.opponent, -INFINITY, INFINITY)
-            # self.fields[pos] = self.empty
-            # self.player, self.opponent = self.opponent, self.player
+            v = self.min_max(self.opponent, -2, 2)
+            print("move:", pos[0] + 1, pos[1] + 1, "causes:", winners[v + 1])
+            if v > -1:
+                res[v].append(pos)
             self.move(*pos, sign=self.empty)
-
-            print("move:", pos, "causes:", winners[val + 1])
-            if val > final_res:
-                final_res = val
-                choices = [pos]
-            elif val == final_res:
-                choices.append(pos)
-        return choice(choices)
-
-    # def get_winner(self):
-    #     for player in [self.player, self.opponent]:
-    #         positions = self.get_fields(player)
-
-    #         if not positions: continue
-    #         for win_state in self.win_states:
-    #             if set(positions).intersection(set(win_state)) == self.size:
-    #                 return player
-
-    #     return None
+        final = 0
+        if res[1]:
+            final = choice(res[1])
+        elif res[0]:
+            final = choice(res[0])
+        else:
+            final = choice(self.get_available_moves())
+        return final
 
     def get_winner(self):
         for player in [self.player, self.opponent]:
@@ -142,7 +128,6 @@ class Board:
 
             if is_computer:
                 best_position = self.get_best()
-                print('THE BEST MOVE', best_position)
                 self.move(*best_position)
                 is_computer = False
 
