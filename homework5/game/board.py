@@ -47,18 +47,15 @@ class Board:
 
         current_value = -INFINITY if player == self.comp_sign else INFINITY
         for pos in self.get_available_moves():
+            self.move(*pos)
+            val = self.min_max(self.opponent, alpha, beta)
+            self.move(*pos, sign=self.empty)
             if player == self.comp_sign:
-                self.move(*pos)
-                val = self.min_max(self.opponent, alpha, beta)
-                self.move(*pos, sign=self.empty)
                 current_value = max(current_value, val)
                 if current_value >= beta:
                     return current_value
                 alpha = max(alpha, current_value)
             else:
-                self.move(*pos)
-                val = self.min_max(self.opponent, alpha, beta)
-                self.move(*pos, sign=self.empty)
                 current_value = min(current_value, val)
                 if current_value <= alpha:
                     return current_value
@@ -67,7 +64,6 @@ class Board:
         return current_value
 
     def get_best(self):
-        final_res = -INFINITY
         winners = (self.opponent, 'Draw', self.player)
 
         positions = self.get_available_moves()
@@ -81,8 +77,17 @@ class Board:
             print("move:", pos[0] + 1, pos[1] + 1, "causes:", winners[v + 1])
             if v > -1:
                 res[v].append(pos)
+            else:
+                # check whether the opponent is about to win
+                opp_moves = self.get_fields(self.player)  # last
+                for win_state in self.win_states:
+                    if len(opp_moves) > 1 and len(set(win_state).difference(set(opp_moves))) == 1:
+                        for win in win_state:
+                            if win not in opp_moves and win in self.get_available_moves():
+                                print(win)
+                                self.move(*pos, sign=self.empty)
+                                return win
             self.move(*pos, sign=self.empty)
-        final = 0
         if res[1]:
             final = choice(res[1])
         elif res[0]:

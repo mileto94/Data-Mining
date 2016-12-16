@@ -1,68 +1,62 @@
-from heapq import heappush, nlargest, heappop
+import csv
+from heapq import heappush, heappop
 from math import sqrt
+from random import sample, choice
 
 
-def update_class(bucket, name):
-    if name in bucket:
-        bucket[name] += 1
-    else:
-        bucket[name] = 1
+def group_classes(elements):
+    bucket = {}
+    for element in elements:
+        name = element[1][-1]
+        if name in bucket:
+            bucket[name] += 1
+        else:
+            bucket[name] = 1
     return bucket
 
 
-def generate_queue(item, elements, k):
-    current_sum = 0
+def generate_queue(item, trainers, k):
     queue = []
-    most_spread_class = {}
-    for element in elements:
-        update_class(most_spread_class, element[-1])
+    for element in trainers:
+        current_sum = 0
         for i in range(len(element) - 1):
-            current_sum += (item[i] - element[i]) ** 2
+            current_sum += (float(item[i]) - float(element[i])) ** 2
         heappush(queue, (sqrt(current_sum), element))
-    
-    new_elements = nlargest(k, queue)
-    for element in new_elements:
-        update_class(most_spread_class, element[1][-1])
-    if len(set(most_spread_class.values())) == 1:
-        _, el = heappop(new_elements)
-        found_class = el[-1]
-    else:
+
+    queue.sort()
+    new_elements = queue[:k]
+    most_spread_class = group_classes(new_elements)
+
+    if len(set(most_spread_class.values())) == len(set(most_spread_class.keys())):
         found_class = sorted(list(most_spread_class.items()), key=lambda x: x[1])[-1][0]
-    
-    return found_class, new_elements
+    else:
+        k = max(most_spread_class.values())
+        classes = [item for item, cl in most_spread_class.items() if cl == k]
+        closest_cl = heappop(new_elements)
+        found_class = closest_cl if closest_cl in classes else choice(classes)
+    return found_class
+
+
+def read_data(filename):
+    with open(filename, 'r') as data_doc:
+        d = csv.reader(data_doc, delimiter=',')
+        return [tuple(item) for item in d]
 
 
 def main():
-    dataset = [
-        [5.1, 3.5, 1.4, 0.2, 'Iris-setosa'],
-        [4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
-        [4.7, 3.2, 1.3, 0.2, 'Iris-setosa'],
-        [4.6, 3.1, 1.5, 0.2, 'Iris-setosa'],
-        [5.0, 3.3, 1.4, 0.2, 'Iris-setosa'],
-        [6.0, 2.2, 4.0, 1.0, 'Iris-versicolor'],
-        # [6.1, 2.9, 4.7, 1.4, 'Iris-versicolor'],
-        [5.4, 3.0, 4.5, 1.5, 'Iris-versicolor'],
-        [6.0, 3.4, 4.5, 1.6, 'Iris-versicolor'],
-        [6.7, 3.1, 4.7, 1.5, 'Iris-versicolor'],
-        [5.1, 2.5, 3.0, 1.1, 'Iris-versicolor'],
-        [5.7, 2.8, 4.1, 1.3, 'Iris-versicolor'],
-        [6.3, 3.3, 6.0, 2.5, 'Iris-virginica'],
-        [5.8, 2.7, 5.1, 1.9, 'Iris-virginica'],
-        [7.1, 3.0, 5.9, 2.1, 'Iris-virginica'],
-        [6.3, 2.9, 5.6, 1.8, 'Iris-virginica'],
-        [6.5, 3.0, 5.8, 2.2, 'Iris-virginica']
-    ]
-    test_data = {
-        (5.6, 2.7, 4.2, 1.3): 'Iris-versicolor',
-        (5.7, 3.0, 4.2, 1.2): 'Iris-versicolor',
-        (5.7, 2.9, 4.2, 1.3): 'Iris-versicolor',
-    }
-    results = {}
-    for item, cl in test_data.items():
-        spread, q = generate_queue(item, dataset, 8)
-        # results[item] = 100 if  
-        # print(item, spread, q)
-        print(spread)
+    count = 0
+    k = int(input('Enter k = '))
+    dataset = read_data('data.csv')
+    test_data = sample(dataset, 20)
+    trainers = set(dataset).difference(set(test_data))
+    for item in test_data:
+        item = list(item)
+        cl = item.pop()
+        found_class = generate_queue(item, trainers, k)
+        count = count + 1 if cl == found_class else count
+        print(item, found_class, cl == found_class)
+    print('Accuracy: {}%'.format(100 * count / len(test_data)))
+
 
 if __name__ == '__main__':
     main()
