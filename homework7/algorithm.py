@@ -1,6 +1,7 @@
 import csv
 from heapq import heappush, heappop
 from random import sample, choice, shuffle, randint
+from collections import OrderedDict
 
 
 def read_data(filename):
@@ -69,19 +70,35 @@ def get_sets(elements, k=10):
 
     tested = [total[i] for i in range(len(total)) if i not in selected]
 
-    return trainers, tested
+    return trainers, tested, n
 
 
-def train(elements, parties):
-    result = {party: [] for party in parties}
+def get_frequency_table(elements, parties):
+    # result = {party: [] for party in parties}
+    result = OrderedDict()
     for trainer in elements:
         for vote_id in range(len(trainer[0]) - 1):
             party = trainer[vote_id][-1]
             all_votes = [i[vote_id] for i in trainer]
-            sorted_el = group_by_count([i for i in all_votes if i != '?'])
+            sorted_el = group_by_count(all_votes)
+            result[vote_id] = sorted_el
+            grouped = group_elements(trainer)
+            grouped_count = {k: len(v) for k, v in grouped.items() if v[vote_id][0] == 'y'}
+            n = len(all_votes)
+            sorted_el = {k: v  for k, v in sorted_el.items()} # / n
             result[party].append({vote_id + 1: sorted_el})
-            # n = len(all_votes)
-            # sorted_el = {k: v / n for k, v in sorted_el.items()}
+    return result
+
+
+def get_likelihood_table(elements):
+    n = len(sum(elements.values(), []))
+    return {k: len(v) / n for k, v in elements.items()}
+
+
+def get_tested(tested, frequency_table, likelihood_table, cleaned_data):
+    result = []
+    for tester in tested:
+        print(tester)
     return result
 
 
@@ -98,13 +115,21 @@ def naive_bayes():
     print(cleaned_data)
 
     # 4. Split data into train_set and test_set
-    trainers, tested = get_sets(cleaned_data)
+    trainers, tested, n = get_sets(cleaned_data)
     print('Trainers', trainers)
     print('Tested', tested)
 
     # 5. create frequency table
-    dataset = train(trainers, cleaned_data.keys())
-    print(dataset)
+    frequency_table = get_frequency_table(trainers, cleaned_data.keys())
+    print(frequency_table)
+
+    # 6. Create Likelihood table
+    likelihood_table = get_likelihood_table(frequency_table)
+    print(likelihood_table)
+
+    # 7. Test data
+    res = get_tested(tested, frequency_table, likelihood_table, cleaned_data)
+    print(res)
 
 
 def main():
