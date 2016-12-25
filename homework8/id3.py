@@ -27,34 +27,17 @@ def sort_by_attr(data, attr_id, class_id):
     return res
 
 
-def main():
-    attributes = ['gender', 'car ownership', 'travel cost', 'income level', 'transportation']
+def build_tree(old_attributes, data):
+    attributes = old_attributes[::]
     all_attributes = attributes[::]
-
-    data = [
-        ('male', 0, 'cheap', 'low', 'bus'),
-        ('male', 1, 'cheap', 'medium', 'bus'),
-        ('female', 1, 'cheap', 'medium', 'train'),
-        ('female', 0, 'cheap', 'low', 'bus'),
-        ('male', 1, 'cheap', 'medium', 'bus'),
-        ('male', 0, 'standard', 'medium', 'train'),
-        ('female', 1, 'standard', 'medium', 'train'),
-        ('female', 1, 'expensive', 'high', 'car'),
-        ('male', 2, 'expensive', 'medium', 'car'),
-        ('female', 2, 'expensive', 'high', 'car')
-    ]
-
-    test_data = [
-        ('male', 1, 'standard', 'high', ''),  # Alex
-        ('male', 0, 'cheap', 'medium', ''),  # Buddy,
-        ('female', 1, 'cheap', 'high', '')  # Cherry
-    ]
 
     tree = {}
     class_id = -1
     current_id = -1
     single = None
+    level = 0
     current = {}
+    attributes_order = []
     while len(attributes):
         attributes.pop(current_id)
         all_gains = {}
@@ -71,6 +54,20 @@ def main():
             print(attr_id, attr)
 
             sorted_by_attr = sort_by_attr(data, attr_id, class_id)
+
+            if len(sorted_by_attr) == len(data):
+                # build small tree
+                empty = {}
+                current[single] = empty
+                for item in data:
+                    empty[item[attr_id]] = sorted_by_attr[attr_id][0][class_id]
+                attributes_order.append(attr_id)
+
+                print(empty)
+                print(tree)
+
+                return tree, attributes_order
+
             probabilities = get_attr_probabilities(data, attr_id)
             entropies = {}
             for key, values in sorted_by_attr.items():
@@ -91,21 +88,65 @@ def main():
         root = [(k, v) for k, v in all_gains.items() if v == maximum_gain][0]
         print(root)
         root_id = all_attributes.index(root[0])
+        attributes_order.append(root_id)
         sorted_by_root = sort_by_attr(data, root_id, class_id)
         if not tree:
             tree[root[0]] = {}
         for key, val in sorted_by_root.items():
             item_value = [i[1] for i in val]
             if len(set(item_value)) == 1:
-                tree[root[0]][key] = item_value[0]
+                if level > 0:
+                    current[key] = item_value[0]
+                else:
+                    tree[root[0]][key] = item_value[0]
             else:
                 current_id = root_id
-                tree[root[0]][key] = current
+                if level > 0:
+                    current[key] = {}
+                else:
+                    tree[root[0]][key] = current
                 single = key
                 print('CHANGE class_id', current_id)
         print(tree)
+        level += 1
         data = [item for item in data if single in item]
     print('FINALLY', tree)
+    return tree, attributes_order
+
+
+def main():
+    attributes = ['gender', 'car ownership', 'travel cost', 'income level', 'transportation']
+
+    data = [
+        ('male', 0, 'cheap', 'low', 'bus'),
+        ('male', 1, 'cheap', 'medium', 'bus'),
+        ('female', 1, 'cheap', 'medium', 'train'),
+        ('female', 0, 'cheap', 'low', 'bus'),
+        ('male', 1, 'cheap', 'medium', 'bus'),
+        ('male', 0, 'standard', 'medium', 'train'),
+        ('female', 1, 'standard', 'medium', 'train'),
+        ('female', 1, 'expensive', 'high', 'car'),
+        ('male', 2, 'expensive', 'medium', 'car'),
+        ('female', 2, 'expensive', 'high', 'car')
+    ]
+
+    test_data = [
+        ('male', 1, 'standard', 'high', ''),  # Alex  =>  train
+        ('male', 0, 'cheap', 'medium', ''),  # Buddy  =>  bus
+        ('female', 1, 'cheap', 'high', '')  # Cherry  =>  train
+    ]
+
+    tree, attributes_order = build_tree(attributes, data)
+    print('***************************************************************************************')
+    # get result
+    for test in test_data:
+        res = tree.get(attributes[attributes_order[0]])
+        index = 0
+        while type(res) is dict and index < len(attributes):
+            res = res.get(test[attributes_order[index]], {})
+            index += 1
+        print(res)
+
 
 if __name__ == '__main__':
     main()
