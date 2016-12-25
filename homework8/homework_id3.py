@@ -53,13 +53,10 @@ def build_tree(old_attributes, data):
         # find probability for class
         calculated = get_attr_probabilities(data, class_id)
         # calculate entropy for class
-        print(calculated)
         entropy = calculate_entropy(calculated)
-        print('entropy', entropy)
 
         for attr in attributes:
             attr_id = all_attributes.index(attr)
-            print(attr_id, attr)
 
             sorted_by_attr = sort_by_attr(data, attr_id, class_id)
 
@@ -71,30 +68,22 @@ def build_tree(old_attributes, data):
                     empty[item[attr_id]] = sorted_by_attr[attr_id][0][class_id]
                 attributes_order.append(attr_id)
 
-                print(empty)
-                print(tree)
-
                 return tree, attributes_order
 
             probabilities = get_attr_probabilities(data, attr_id)
             entropies = {}
             for key, values in sorted_by_attr.items():
-                print(key, values)
-                sorted_values = get_attr_probabilities(values, 1)
-                print(key, sorted_values)
+                sorted_values = get_attr_probabilities(values, class_id)
                 entropies[key] = calculate_entropy(sorted_values)
-            print(entropies)
             # calculate gain
             gain = entropy
             for k, v in entropies.items():
                 gain -= probabilities[k] * v
-            print('Gain: ', gain)
             all_gains[attr] = gain
-            print('----------------------------------------------------')
         print("All gains", all_gains)
+
         maximum_gain = max(all_gains.values())
         root = [(k, v) for k, v in all_gains.items() if v == maximum_gain][0]
-        print(root)
         root_id = all_attributes.index(root[0])
         attributes_order.append(root_id)
         sorted_by_root = sort_by_attr(data, root_id, class_id)
