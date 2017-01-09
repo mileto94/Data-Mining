@@ -84,29 +84,5 @@ def main():
     print(board)
 
 
-def test_main():
-    is_computer = True
-    board = Board(is_computer)
-    board.player, board.opponent = 'X', 'O'
-    # X is computer
-    # board.fields.update({
-    #     (0, 0): 'X',
-    #     (0, 1): 'O',
-    #     (2, 0): 'O',
-    #     # (2, 2): 'X'
-    # })
-    # board.player, board.opponent = board.opponent, board.player
-    board.fields.update({
-        (0, 0): 'O',
-        (1, 0): 'O',
-        (1, 1): 'X',
-        (2, 2): 'X'
-    })
-    # O | _ | _
-    # O | X | _
-    # _ | _ | X
-    print(board)
-
-
 if __name__ == '__main__':
     main()
