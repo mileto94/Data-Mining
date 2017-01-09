@@ -13,7 +13,11 @@ class Board:
         self.fields = fields if fields else OrderedDict(
             {(i, j): self.empty for j in range(self.size) for i in range(self.size)})
         self.sign = COMP_SIGN if is_computer else self.get_enemy(COMP_SIGN)
-        self.children = []
+        self.winnging=self.children = {}
+        self.winning_states = [(i, j) for j in range(self.size) for i in range(self.size)] # rows
+        self.winning_states.append([(i, j) for i in range(self.size) for j in range(self.size)])  # cols
+        self.winning_states.append([(i, i) for i in range(self.size)])
+        self.winning_states.append([(0, 2), (1, 1), (2, 0)])
 
     def __str__(self):
         board = []
@@ -38,7 +42,44 @@ class Board:
         for pos in self.get_empty_fields():
             new_fields = self.fields.copy()
             new_fields[pos] = self.get_sign(is_computer)
-            self.children.append(Board(is_computer, fields=new_fields))
+            self.children[Board(is_computer, fields=new_fields)] = 0
+
+    def wins(self, is_computer):
+        current_player = COMP_SIGN if is_computer else self.get_enemy(COMP_SIGN)
+        played_positions = [pos for pos, player in self.fields if player == current_player]
+        for combo in self.winning_states:
+            played = [True for win in combo if win in played_positions]
+            if len(played) == self.size:
+                return True
+        return False
+
+    def is_over(self, player):
+        is_max = True if player == COMP_SIGN else False
+        if self.empty not in self.fields or self.wins(is_max) is not None:
+            return True
+        return False
+
+    def get_score(self):
+        if self.wins(COMP_SIGN):
+            return 10
+        elif self.wins(self.get_enemy(COMP_SIGN)):
+            return -10
+        return 0
+
+    def user_play(self):
+        position = input('Enter position with space: ')
+        x, y = map(int, position.split(' '))
+        if -1 < x < 3 and -1 < y < 3 and self.fields[x, y] == self.empty:
+            self.fields[x, y] = 'X'
+        else:
+            print('This filed is not empty or the coordinates are not valid!')
+            self.user_play()
+
+    def computer_play(self):
+        val = minimax(self, COMP_SIGN, -INFINITY, INFINITY)
+        print(val)
+        print(self.get_empty_fields())
+        print(self.children)
 
     def play(self, is_max):
         while True:
@@ -48,22 +89,31 @@ class Board:
             self.user_play()
             is_max = True
 
-    def user_play(self):
-        position = input('Enter position with space: ')
-        x, y = map(int, position.split(' '))
-        if self.fields[x, y] == self.empty:
-            self.fields[x, y] = 'X'
 
-    def computer_play(self):
-        print(self.get_empty_fields())
-        self.generate_children(True)
-        print(self.children)
+def minimax(board, player, alpha, beta):
+    # check whether game is terminated
+    if board.is_over(player):
+        return board.get_score()
 
-    def minimax(self, board, player, alpha, beta):
-        # is game terminated
-        if player == COMP_SIGN:
-            for child in self.children:
-                pass
+    val = INFINITY
+    if player == COMP_SIGN:
+        for child in board.children:
+            # MOVEEEEE!!!
+            val = minimax(child, child.get_enemy(player), alpha, beta)
+            if val >= beta:
+                # beta prunning
+                return val
+            alpha = val
+            return val
+    else:
+        for child in board.children:
+            # MOVEEEEE!!!
+            val = minimax(child, child.get_enemy(player), alpha, beta)
+            if val <= alpha:
+                # alpha prunning
+                return val
+            beta = val
+            return val
 
 
 def main():
