@@ -1,21 +1,23 @@
+import json
 from random import randint
 from collections import OrderedDict
+from heapq import heappush, nlargest
 
 
 COMP_SIGN = 'O'
+PLAYER_SIGN = 'X'
 INFINITY = 100
 
 
 class Board:
-    def __init__(self, is_computer, fields=[]):
+    def __init__(self, fields=[]):
         self.size = 3
         self.empty = '_'
         self.fields = fields if fields else OrderedDict(
             {(i, j): self.empty for j in range(self.size) for i in range(self.size)})
-        self.sign = COMP_SIGN if is_computer else self.get_enemy(COMP_SIGN)
-        self.winnging=self.children = {}
-        self.winning_states = [(i, j) for j in range(self.size) for i in range(self.size)] # rows
-        self.winning_states.append([(i, j) for i in range(self.size) for j in range(self.size)])  # cols
+
+        self.winning_states = [[(i, j) for j in range(self.size)] for i in range(self.size)]  # rows
+        self.winning_states.extend([[(i, j) for i in range(self.size)] for j in range(self.size)])  # cols
         self.winning_states.append([(i, i) for i in range(self.size)])
         self.winning_states.append([(0, 2), (1, 1), (2, 0)])
 
@@ -29,94 +31,141 @@ class Board:
         return str(self.fields)
 
     def get_enemy(self, sign):
-        return 'O' if sign == 'x' else 'X'
+        return PLAYER_SIGN if sign == COMP_SIGN else COMP_SIGN
 
     def get_empty_fields(self):
         return [pos for pos, val in self.fields.items() if val == self.empty]
 
-    def get_sign(self, is_computer):
-        return 'O' if is_computer else 'X'
+    def get_played_fields(self, player):
+        return [field for field, pl in self.fields.items() if pl == player]
 
-    def generate_children(self, is_computer):
-        self.children = []
-        for pos in self.get_empty_fields():
-            new_fields = self.fields.copy()
-            new_fields[pos] = self.get_sign(is_computer)
-            self.children[Board(is_computer, fields=new_fields)] = 0
+    def wins(self):
+        played = {
+            COMP_SIGN: self.get_played_fields(COMP_SIGN),
+            PLAYER_SIGN: self.get_played_fields(PLAYER_SIGN)
+        }
+        for sign, positions in played.items():
+            if positions:
+                for combo in self.winning_states:
+                    played = [True for win in combo if win in positions]
+                    if len(played) == self.size:
+                        return sign
+        return None
 
-    def wins(self, is_computer):
-        current_player = COMP_SIGN if is_computer else self.get_enemy(COMP_SIGN)
-        played_positions = [pos for pos, player in self.fields if player == current_player]
-        for combo in self.winning_states:
-            played = [True for win in combo if win in played_positions]
-            if len(played) == self.size:
-                return True
-        return False
-
-    def is_over(self, player):
-        is_max = True if player == COMP_SIGN else False
-        if self.empty not in self.fields or self.wins(is_max) is not None:
+    def is_over(self):
+        if len(self.get_empty_fields()) == 0 or self.wins() is not None:
             return True
         return False
 
     def get_score(self):
-        if self.wins(COMP_SIGN):
+        if self.wins() == COMP_SIGN:
             return 10
-        elif self.wins(self.get_enemy(COMP_SIGN)):
+        elif self.wins() == PLAYER_SIGN:
             return -10
         return 0
 
     def user_play(self):
+        print(self)
+        print(self.get_empty_fields())
         position = input('Enter position with space: ')
         x, y = map(int, position.split(' '))
         if -1 < x < 3 and -1 < y < 3 and self.fields[x, y] == self.empty:
-            self.fields[x, y] = 'X'
+            self.fields[x, y] = PLAYER_SIGN
         else:
             print('This filed is not empty or the coordinates are not valid!')
             self.user_play()
 
     def computer_play(self):
-        val = minimax(self, COMP_SIGN, -INFINITY, INFINITY)
-        print(val)
-        print(self.get_empty_fields())
-        print(self.children)
+        # board, val = minimax(self, COMP_SIGN, -INFINITY, INFINITY)
+        # print('Result from minimax:', val)
+        # self.fields = board.fields.copy()
+        scores = []
+        for pos in self.get_empty_fields():
+            b1 = Board(fields=self.fields.copy())
+            b1.move(pos, COMP_SIGN)
+            _, v = minimax(b1, PLAYER_SIGN, -INFINITY, INFINITY)
+            heappush(scores, (v, pos))
+        print(scores)
+        sc, best_position = nlargest(1, scores)[0]
+        self.move(best_position, COMP_SIGN)
 
     def play(self, is_max):
         while True:
-            if is_max:
+            print(self)
+            print(self.get_empty_fields())
+
+            if self.is_over():
+                return self.wins()
+            elif is_max:
                 self.computer_play()
                 is_max = False
-            self.user_play()
-            is_max = True
+            else:
+                self.user_play()
+                is_max = True
+
+    def move(self, position, sign):
+        if tuple(position) in self.fields.keys() and position in self.get_empty_fields():
+            self.fields[position] = sign
 
 
-def minimax(board, player, alpha, beta):
-    # check whether game is terminated
-    if board.is_over(player):
-        return board.get_score()
+def minimax(board, player, alpha, beta, depth=0):
+    if board.is_over():
+        # print('GAME IS OVER')
+        # print('GAME OVER score:', board.get_score(), board.get_score() - depth)
+        return board, board.get_score() - depth
 
-    val = INFINITY
     if player == COMP_SIGN:
-        for child in board.children:
-            # MOVEEEEE!!!
-            val = minimax(child, child.get_enemy(player), alpha, beta)
-            if val >= beta:
+        best_value = -INFINITY
+        for pos in board.get_empty_fields():
+            # child is the same board with 1 additional move on one of the free places
+            child = Board(fields=board.fields.copy())
+            child.move(pos, player)
+            # print(child)
+            _, current_value = minimax(child, board.get_enemy(player), alpha, beta, depth=depth + 1)
+            best_value = max(current_value, best_value)
+            alpha = max(best_value, alpha)
+            if alpha >= beta:
                 # beta prunning
-                return val
-            alpha = val
-            return val
+                break
+        return child, best_value - depth
+
     else:
-        for child in board.children:
-            # MOVEEEEE!!!
-            val = minimax(child, child.get_enemy(player), alpha, beta)
-            if val <= alpha:
+        best_value = INFINITY
+        for pos in board.get_empty_fields():
+            # child is the same board with 1 additional move on one of the free places
+            child = Board(fields=board.fields.copy())
+            child.move(pos, player)
+            # print(child)
+            _, current_value = minimax(child, board.get_enemy(player), alpha, beta, depth=depth + 1)
+            best_value = min(current_value, best_value)
+            beta = min(current_value, beta)
+            if beta <= alpha:
                 # alpha prunning
-                return val
-            beta = val
-            return val
+                break
+        return child, best_value - depth
+
+    # for pos in empty_fields:
+    #     # child is the same board with 1 additional move on one of the free places
+    #     child = Board(fields=board.fields.copy())
+    #     child.move(pos, player)
+    #     # print(child)
+    #     _, current_value = minimax(child, board.get_enemy(player), alpha, beta, depth=depth + 1)
+    #     if player == COMP_SIGN:
+    #         best_value = max(current_value, best_value)
+    #         if current_value >= beta:
+    #             # beta prunning
+    #             break
+    #         alpha = current_value
+    #     else:
+    #         best_value = min(current_value, best_value)
+    #         if current_value <= alpha:
+    #             # alpha prunning
+    #             break
+    #         beta = current_value
+    # return child, best_value - depth
 
 
-def main():
+def tic_tac_toe():
     rand_num = randint(0, 1000)
     print('Fill in board with 0-based numbers!!!')
     if rand_num % 2 == 0:
@@ -128,7 +177,39 @@ def main():
         print('Yey, the first player is you! The computer plays with O. You play with X.')
         is_computer = False
 
-    board = Board(is_computer)
+    board = Board()
+
+    board.play(is_computer)
+    print(board)
+
+
+def main():
+    # tic_tac_toe()
+    rand_num = randint(0, 1000)
+    print('Fill in board with 0-based numbers!!!')
+    if rand_num % 2 == 0:
+        # computer
+        print('The first player is computer. He plays with O. You play with X.')
+        is_computer = True
+    else:
+        # player
+        print('Yey, the first player is you! The computer plays with O. You play with X.')
+        is_computer = False
+
+    board = Board()
+
+    # # test fixes
+    # board.fields.update({
+    #     (0, 1): 'X',
+    #     (1, 2): 'X',
+    #     (2, 0): 'O',
+    #     (2, 1): 'O',
+    #     (2, 2): 'X'
+    # })
+    # global COMP_SIGN, PLAYER_SIGN
+    # COMP_SIGN = 'X'
+    # PLAYER_SIGN = 'O'
+    # is_computer = False
 
     board.play(is_computer)
     print(board)
