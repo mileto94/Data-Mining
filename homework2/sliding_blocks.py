@@ -12,6 +12,7 @@ class State:
         self.directions = []
         self.zero_index = self.elements.index(0)
         self.path = 0
+        self.length = len(self.elements)
 
     def __len__(self):
         return len(self.elements)
@@ -25,12 +26,6 @@ class State:
     def __repr__(self):
         return str(self.elements)
 
-    def add_direction(self, direction):
-        self.directions.append(direction)
-
-    def copy_directions(self, other_state):
-        self.directions = other_state.directions + self.directions
-
     @property
     def dict(self):
         return {item: (i // 3, i % 3) for i, item in enumerate(self.elements)}
@@ -39,64 +34,65 @@ class State:
     def str(self):
         return str(self.elements)
 
+    def add_direction(self, direction):
+        self.directions.append(direction)
+
+    def copy_directions(self, other_state):
+        self.directions = other_state.directions + self.directions
+
     def update_zero_index(self):
         self.zero_index = self.elements.index(0)
 
+    def change_elements(self, old, new):
+        """Switch places of two elements in list."""
+        # we should copy the list not refer to it
+        new_state = State(self.elements[::])
+        new_state.copy_directions(self)
+        new_state.elements[old], new_state.elements[new] = new_state.elements[new], new_state.elements[old]
+        new_state.update_zero_index()
+        new_state.path = self.path + 1
+        return new_state
 
-def change_elements(state, old, new):
-    """Switch places of two elements in list."""
-    # we should copy the list not refer to it
-    new_state = State(state.elements[::])
-    new_state.copy_directions(state)
-    new_state.elements[old], new_state.elements[new] = new_state.elements[new], new_state.elements[old]
-    new_state.update_zero_index()
-    new_state.path = state.path + 1
-    return new_state
+    def generate_children(self, end):
+        """Generate children of current state and push them into the priority queue."""  # noqa
+        row_length = int(sqrt(self.length))
+        index = self.zero_index
+        if index - row_length > -1:
+            new_state = self.change_elements(index, index - row_length)
+            if new_state.str not in VISITED:
+                new_state.add_direction('down')
+                heappush(HEAP, (self.get_estimation(new_state, end), new_state))
+        if index + row_length < self.length:
+            new_state = self.change_elements(index, index + row_length)
+            if new_state.str not in VISITED:
+                new_state.add_direction('up')
+                heappush(HEAP, (self.get_estimation(new_state, end), new_state))
+        if index % 3 != 0 and index > 0:
+            new_state = self.change_elements(index, index - 1)
+            if new_state.str not in VISITED:
+                new_state.add_direction('right')
+                heappush(HEAP, (self.get_estimation(new_state, end), new_state))
+        if index % 3 != 2 and index + 1 < self.length:
+            new_state = self.change_elements(index, index + 1)
+            if new_state.str not in VISITED:
+                new_state.add_direction('left')
+                heappush(HEAP, (self.get_estimation(new_state, end), new_state))
 
+    def g(self, state):
+        """Return cost of the path till the current state."""
+        return state.path
 
-def generate_children(state, end):
-    """Generate children of current state and push them into the priority queue."""  # noqa
-    row_length = int(sqrt(len(state)))
-    index = state.zero_index
-    if index - row_length > -1:
-        new_state = change_elements(state, index, index - row_length)
-        if new_state.str not in VISITED:
-            new_state.add_direction('down')
-            heappush(HEAP, (get_estimation(new_state, end), new_state))
-    if index + row_length < len(state):
-        new_state = change_elements(state, index, index + row_length)
-        if new_state.str not in VISITED:
-            new_state.add_direction('up')
-            heappush(HEAP, (get_estimation(new_state, end), new_state))
-    if index % 3 != 0 and index > 0:
-        new_state = change_elements(state, index, index - 1)
-        if new_state.str not in VISITED:
-            new_state.add_direction('right')
-            heappush(HEAP, (get_estimation(new_state, end), new_state))
-    if index % 3 != 2 and index + 1 < len(state):
-        new_state = change_elements(state, index, index + 1)
-        if new_state.str not in VISITED:
-            new_state.add_direction('left')
-            heappush(HEAP, (get_estimation(new_state, end), new_state))
+    def h(self, state, end):
+        """Return heuristic estimation from current state to goal."""
+        state_dict = state.dict
+        end_dict = end.dict
+        return sum([
+            abs(value[0] - state_dict[key][0]) + abs(value[1] - state_dict[key][1])
+            for key, value in end_dict.items()])
 
-
-def g(state):
-    """Return cost of the path till the current state."""
-    return state.path
-
-
-def h(state, end):
-    """Return heuristic estimation from current state to goal."""
-    state_dict = state.dict
-    end_dict = end.dict
-    return sum([
-        abs(value[0] - state_dict[key][0]) + abs(value[1] - state_dict[key][1])
-        for key, value in end_dict.items()])
-
-
-def get_estimation(state, end):
-    """Get estimate for the current state."""
-    return h(state, end) + g(state)
+    def get_estimation(self, state, end):
+        """Get estimate for the current state."""
+        return self.h(state, end) + self.g(state)
 
 
 def a_star(state, end):
@@ -104,14 +100,14 @@ def a_star(state, end):
     if state.str == end.str:
         return state
     VISITED.add(state.str)
-    generate_children(state, end)
+    state.generate_children(end)
     while HEAP:
         _, current_state = heappop(HEAP)
         if current_state.str in VISITED: continue
         VISITED.add(current_state.str)
         if current_state.str == end.str:
             return current_state
-        generate_children(current_state, end)
+        current_state.generate_children(end)
     return False
 
 
@@ -136,7 +132,6 @@ def call_a_star():
     # end = State([1, 2, 3, 4, 5, 6, 7, 8, 0])
     # start = State([2, 3, 6, 1, 5, 8, 4, 7, 0])  # 8
     # start = State([6, 5, 3, 2, 4, 8, 7, 0, 1])  # 21
-    # start = State([8, 7, 0, 2, 5, 6, 3, 4, 1])  # 30 INFINITY
     # start = State([7, 2, 8, 3, 1, 4, 0, 6, 5])  # 22
     # start = State([8, 1, 3, 5, 6, 7, 2, 4, 0])  # 18
     # start = State([0, 1, 2, 7, 4, 6, 8, 5, 3])  # 16
