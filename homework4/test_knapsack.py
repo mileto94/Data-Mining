@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from knapsack import knapsack
+from Knapsack import knapsack
 import unittest
 
 
