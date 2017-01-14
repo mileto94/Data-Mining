@@ -9,7 +9,7 @@ PLAYER_SIGN = 'X'
 INFINITY = 100
 
 
-class Board:
+class TicTacToe:
     def __init__(self, fields=[]):
         self.size = 3
         self.empty = '_'
@@ -65,8 +65,8 @@ class Board:
         return 0
 
     def user_play(self):
-        print(self)
-        print(self.get_empty_fields())
+        # print(self)
+        # print(self.get_empty_fields())
         position = input('Enter position with space: ')
         x, y = map(int, position.split(' '))
         if -1 < x < 3 and -1 < y < 3 and self.fields[x, y] == self.empty:
@@ -81,7 +81,7 @@ class Board:
         # self.fields = board.fields.copy()
         scores = []
         for pos in self.get_empty_fields():
-            b1 = Board(fields=self.fields.copy())
+            b1 = TicTacToe(fields=self.fields.copy())
             b1.move(pos, COMP_SIGN)
             _, v = minimax(b1, PLAYER_SIGN, -INFINITY, INFINITY)
             heappush(scores, (v, pos))
@@ -118,7 +118,7 @@ def minimax(board, player, alpha, beta, depth=0):
         best_value = -INFINITY
         for pos in board.get_empty_fields():
             # child is the same board with 1 additional move on one of the free places
-            child = Board(fields=board.fields.copy())
+            child = TicTacToe(fields=board.fields.copy())
             child.move(pos, player)
             # print(child)
             _, current_value = minimax(child, board.get_enemy(player), alpha, beta, depth=depth + 1)
@@ -127,13 +127,13 @@ def minimax(board, player, alpha, beta, depth=0):
             if alpha >= beta:
                 # beta prunning
                 break
-        return child, best_value - depth
+        return _, best_value - depth
 
     else:
         best_value = INFINITY
         for pos in board.get_empty_fields():
             # child is the same board with 1 additional move on one of the free places
-            child = Board(fields=board.fields.copy())
+            child = TicTacToe(fields=board.fields.copy())
             child.move(pos, player)
             # print(child)
             _, current_value = minimax(child, board.get_enemy(player), alpha, beta, depth=depth + 1)
@@ -142,11 +142,11 @@ def minimax(board, player, alpha, beta, depth=0):
             if beta <= alpha:
                 # alpha prunning
                 break
-        return child, best_value - depth
+        return _, best_value - depth
 
     # for pos in empty_fields:
     #     # child is the same board with 1 additional move on one of the free places
-    #     child = Board(fields=board.fields.copy())
+    #     child = TicTacToe(fields=board.fields.copy())
     #     child.move(pos, player)
     #     # print(child)
     #     _, current_value = minimax(child, board.get_enemy(player), alpha, beta, depth=depth + 1)
@@ -165,24 +165,6 @@ def minimax(board, player, alpha, beta, depth=0):
     # return child, best_value - depth
 
 
-def tic_tac_toe():
-    rand_num = randint(0, 1000)
-    print('Fill in board with 0-based numbers!!!')
-    if rand_num % 2 == 0:
-        # computer
-        print('The first player is computer. He plays with O. You play with X.')
-        is_computer = True
-    else:
-        # player
-        print('Yey, the first player is you! The computer plays with O. You play with X.')
-        is_computer = False
-
-    board = Board()
-
-    board.play(is_computer)
-    print(board)
-
-
 def main():
     # tic_tac_toe()
     rand_num = randint(0, 1000)
@@ -196,7 +178,7 @@ def main():
         print('Yey, the first player is you! The computer plays with O. You play with X.')
         is_computer = False
 
-    board = Board()
+    board = TicTacToe()
 
     # # test fixes
     # board.fields.update({
@@ -209,9 +191,16 @@ def main():
     # global COMP_SIGN, PLAYER_SIGN
     # COMP_SIGN = 'X'
     # PLAYER_SIGN = 'O'
-    # is_computer = False
 
-    board.play(is_computer)
+    is_computer = False
+
+    winner = board.play(is_computer)
+    winners = {
+        COMP_SIGN: 'computer...',
+        PLAYER_SIGN: 'you!',
+        None: 'no one :)'
+    }
+    print('The winner is {}'.format(winners[winner]))
     print(board)
 
 
