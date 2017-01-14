@@ -1,4 +1,3 @@
-import json
 from random import randint
 from collections import OrderedDict
 from heapq import heappush, nlargest
@@ -78,21 +77,17 @@ class TicTacToe:
             return self.user_play()
 
     def computer_play(self):
-        # board, val = minimax(self, COMP_SIGN, -INFINITY, INFINITY)
-        # print('Result from minimax:', val)
-        # self.fields = board.fields.copy()
         scores = []
+        res = []
         for pos in self.get_empty_fields():
             b1 = TicTacToe(fields=self.fields.copy())
             b1.move(pos, COMP_SIGN)
-            v, d = minimax(b1, PLAYER_SIGN, -INFINITY, INFINITY)
-            # print('******************************************************')
-            # print(v, 'at depth', d)
-            # print('******************************************************')
+            v = minimax(b1, PLAYER_SIGN, -INFINITY, INFINITY)
+            v1 = min_max(b1, PLAYER_SIGN, -INFINITY, INFINITY)
+            res.append(v == v1)
             heappush(scores, (v, pos))
-        # print(scores)
         sc, best_position = nlargest(1, scores)[0]
-        # print('BEST move is', best_position, 'with score', sc)
+        print(all(res))
         print('Computer plays on {}...'.format(best_position))
         self.move(best_position, COMP_SIGN)
 
@@ -101,8 +96,6 @@ class TicTacToe:
         print()
 
         while True:
-            # print(self.get_empty_fields())
-
             if self.is_over():
                 return self.wins()
             elif is_max:
@@ -119,9 +112,9 @@ class TicTacToe:
             self.fields[position] = sign
 
 
-def minimax(board, player, alpha, beta, depth=0):
+def minimax(board, player, alpha, beta):
     if board.is_over():
-        return board.get_score(), depth
+        return board.get_score()
 
     if player == COMP_SIGN:
         best_value = -INFINITY
@@ -129,14 +122,13 @@ def minimax(board, player, alpha, beta, depth=0):
             # child is the same board with 1 additional move on one of the free places
             child = TicTacToe(fields=board.fields.copy())
             child.move(pos, player)
-            # print(child)
-            current_value, d = minimax(child, board.get_enemy(player), alpha, beta, depth=depth + 1)
+            current_value = minimax(child, board.get_enemy(player), alpha, beta)
             best_value = max(current_value, best_value)
             alpha = max(best_value, alpha)
             if alpha >= beta:
                 # beta prunning
                 break
-        return best_value, depth
+        return best_value
 
     else:
         best_value = INFINITY
@@ -144,35 +136,39 @@ def minimax(board, player, alpha, beta, depth=0):
             # child is the same board with 1 additional move on one of the free places
             child = TicTacToe(fields=board.fields.copy())
             child.move(pos, player)
-            # print(child)
-            current_value, d = minimax(child, board.get_enemy(player), alpha, beta, depth=depth + 1)
+            current_value = minimax(child, board.get_enemy(player), alpha, beta)
             best_value = min(current_value, best_value)
             beta = min(current_value, beta)
             if beta <= alpha:
                 # alpha prunning
                 break
-        return best_value, depth
+        return best_value
 
-    # best_value = -INFINITY if player == COMP_SIGN else INFINITY
-    # for pos in board.get_empty_fields():
-    #     # child is the same board with 1 additional move on one of the free places
-    #     # child = TicTacToe(fields=board.fields.copy())
-    #     board.move(pos, player)
-    #     # print(child)
-    #     current_value = minimax(child, board.get_enemy(player), alpha, beta, depth=depth + 1)
-    #     if player == COMP_SIGN:
-    #         best_value = max(current_value, best_value)
-    #         if current_value >= beta:
-    #             # beta prunning
-    #             break
-    #         alpha = current_value
-    #     else:
-    #         best_value = min(current_value, best_value)
-    #         if current_value <= alpha:
-    #             # alpha prunning
-    #             break
-    #         beta = current_value
-    # return best_value - depth
+
+def min_max(board, player, alpha, beta):
+    if board.is_over():
+        return board.get_score()
+
+    best_value = -INFINITY if player == COMP_SIGN else INFINITY
+    for pos in board.get_empty_fields():
+        # child is the same board with 1 additional move on one of the free places
+        child = TicTacToe(fields=board.fields.copy())
+        child.move(pos, player)
+        current_value = minimax(child, board.get_enemy(player), alpha, beta)
+
+        if player == COMP_SIGN:
+            best_value = max(current_value, best_value)
+            alpha = max(best_value, alpha)
+            if alpha >= beta:
+                # beta prunning
+                break
+        else:
+            best_value = min(current_value, best_value)
+            beta = min(current_value, beta)
+            if beta <= alpha:
+                # alpha prunning
+                break
+    return best_value
 
 
 def main():
@@ -189,19 +185,6 @@ def main():
         is_computer = False
 
     board = TicTacToe()
-
-    # # test fixes
-    # board.fields.update({
-    #     (0, 1): 'X',
-    #     (1, 2): 'X',
-    #     (2, 0): 'O',
-    #     (2, 1): 'O',
-    #     (2, 2): 'X'
-    # })
-    # global COMP_SIGN, PLAYER_SIGN
-    # COMP_SIGN = 'X'
-    # PLAYER_SIGN = 'O'
-    # is_computer = False
 
     winner = board.play(is_computer)
     winners = {
