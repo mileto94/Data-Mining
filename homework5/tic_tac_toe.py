@@ -78,21 +78,13 @@ class TicTacToe:
             return self.user_play()
 
     def computer_play(self):
-        # board, val = minimax(self, COMP_SIGN, -INFINITY, INFINITY)
-        # print('Result from minimax:', val)
-        # self.fields = board.fields.copy()
         scores = []
         for pos in self.get_empty_fields():
             b1 = TicTacToe(fields=self.fields.copy())
             b1.move(pos, COMP_SIGN)
             v, d = minimax(b1, PLAYER_SIGN, -INFINITY, INFINITY)
-            # print('******************************************************')
-            # print(v, 'at depth', d)
-            # print('******************************************************')
             heappush(scores, (v, pos))
-        # print(scores)
         sc, best_position = nlargest(1, scores)[0]
-        # print('BEST move is', best_position, 'with score', sc)
         print('Computer plays on {}...'.format(best_position))
         self.move(best_position, COMP_SIGN)
 
@@ -101,8 +93,6 @@ class TicTacToe:
         print()
 
         while True:
-            # print(self.get_empty_fields())
-
             if self.is_over():
                 return self.wins()
             elif is_max:
@@ -153,28 +143,6 @@ def minimax(board, player, alpha, beta, depth=0):
                 break
         return best_value, depth
 
-    # best_value = -INFINITY if player == COMP_SIGN else INFINITY
-    # for pos in board.get_empty_fields():
-    #     # child is the same board with 1 additional move on one of the free places
-    #     # child = TicTacToe(fields=board.fields.copy())
-    #     board.move(pos, player)
-    #     # print(child)
-    #     current_value = minimax(child, board.get_enemy(player), alpha, beta, depth=depth + 1)
-    #     if player == COMP_SIGN:
-    #         best_value = max(current_value, best_value)
-    #         if current_value >= beta:
-    #             # beta prunning
-    #             break
-    #         alpha = current_value
-    #     else:
-    #         best_value = min(current_value, best_value)
-    #         if current_value <= alpha:
-    #             # alpha prunning
-    #             break
-    #         beta = current_value
-    # return best_value - depth
-
-
 def main():
     # tic_tac_toe()
     rand_num = randint(0, 1000)
@@ -189,19 +157,6 @@ def main():
         is_computer = False
 
     board = TicTacToe()
-
-    # # test fixes
-    # board.fields.update({
-    #     (0, 1): 'X',
-    #     (1, 2): 'X',
-    #     (2, 0): 'O',
-    #     (2, 1): 'O',
-    #     (2, 2): 'X'
-    # })
-    # global COMP_SIGN, PLAYER_SIGN
-    # COMP_SIGN = 'X'
-    # PLAYER_SIGN = 'O'
-    # is_computer = False
 
     winner = board.play(is_computer)
     winners = {
