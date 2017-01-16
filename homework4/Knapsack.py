@@ -2,15 +2,17 @@ from random import randint, random  # noqa
 from math import sqrt
 from collections import OrderedDict
 from copy import deepcopy
+from time import time
+
+MAX_POPULATION = 100
+MUTATION_PROPABILITY = 0.05
+MAX_ITERATIONS = 100
+GENERATIONS = []
+POPULATION_COUNTER = 20
+
 # M: max weight
 # N: max count
 # v want ot be max
-MAX_POPULATION = 100
-MUTATION_PROPABILITY = 0.05
-MAX_ITERATIONS = 1000
-GENERATIONS = []
-POPULATION_COUNTER = 20
-from time import time
 
 
 def read_user_input():  # noqa
@@ -23,26 +25,25 @@ def read_user_input():  # noqa
         ... ,
         (wi, vi): 0}
     """
-    m = int(input('Enter max wight of the knapsack: M = '))
+    m = int(input('Enter max wеight of the knapsack: M = '))
     n = int(input('Enter max count of items in knapsack: N = '))
     print('Fill in the items by entering each item (cost, weight) on new line and numbers separated by " "(space).')  # noqa
     items = OrderedDict()
     for item in range(n):
         item = list(map(int, input().split(' ')))
         items[tuple(item[::-1])] = 0
-    MAX_POPULATION = round(sqrt(n))
+    # MAX_POPULATION = round(sqrt(n))
     return items, m, n
 
 
 def get_population_cost(population, m):
-    res = 0
-    for item in population:
-        #res += sum([k[1] for k in item.keys()])
-        res += fitness_function(item,m)
-    return res
+    """Calculate how much fit is one population."""
+    return sum(map(lambda item: fitness_function(item, m), population))
 
 
 def generate_pop(items, population=[]):
+    """Generate new populations unitl MAX_POPULATION number is reached of
+    MAX_POPULATION iterations are made."""
     global POPULATION_COUNTER
     i = MAX_POPULATION
     while len(population) < MAX_POPULATION and i > 0:
@@ -72,10 +73,7 @@ def fitness_function(items, m):
 
 def do_crossover(best_parents, population):
     """Do crossover matching."""
-    #if len(population) < 2:
-    #    return population
     first, second = best_parents
-    print(best_parents)
     rand_index = randint(1, len(first))
     f_vals = list(first.values())
     s_vals = list(second.values())
@@ -89,6 +87,8 @@ def do_crossover(best_parents, population):
 
 
 def mutate_population(population, m):
+    """Mutate randomly selected individuals from population.
+       Use elitism (save best parents in the new generation)."""
     best = sorted(
         population,
         key=lambda child: fitness_function(child, m),
@@ -105,11 +105,12 @@ def mutate_population(population, m):
 
 
 def is_solution(population, m, n):
+    """Check whether this population is a solution."""
     global GENERATIONS
     current_best = population[0]
     GENERATIONS.append(current_best)
-    if len(GENERATIONS) < 30:
-        return False
+    # if len(GENERATIONS) < 30:
+    #     return False
     best = sorted(
         population,
         key=lambda child: fitness_function(child, m),
@@ -124,10 +125,10 @@ def is_solution(population, m, n):
 
 def select_parents(population, m):
     fitness_population = sorted(
-            population,
-            key=lambda child: fitness_function(child, m),
-            reverse=True)
-    #ordered_population = []
+        population,
+        key=lambda child: fitness_function(child, m),
+        reverse=True)
+    # ordered_population = []
     total_cost = get_population_cost(fitness_population, m)
     rand_num = random()
     for item in fitness_population:
@@ -135,7 +136,7 @@ def select_parents(population, m):
         percentage = item_cost / total_cost
         if percentage > rand_num:
             return item
-            break;
+            break
         else:
             rand_num -= percentage
 
@@ -145,50 +146,16 @@ def pseudo_user():
     items = OrderedDict({(2, 3): 0, (5, 1): 0, (3, 2): 0})
     m = 5
     n = 3
-    #MAX_POPULATION = round(sqrt(n))
+    # MAX_POPULATION = round(sqrt(n))
     MAX_POPULATION = 100
     return items, m, n
 
 
 def pseudo_user1():
     global MAX_POPULATION
-    items = OrderedDict({
-        (90, 150): 0,
-        (130, 35): 0,
-        (1530, 200): 0,
-        (500, 160): 0,
-        (150, 60): 0,
-        (680, 45): 0,
-        (270, 60): 0,
-        (390, 40): 0,
-        (230, 30): 0,
-        (520, 10): 0,
-        (110, 70): 0,
-        (320, 30): 0,
-        (240, 15): 0,
-        (480, 10): 0,
-        (730, 40): 0,
-        (420, 70): 0,
-        (430, 75): 0,
-        (220, 80): 0,
-        (70, 20): 0,
-        (180, 12): 0,
-        (40, 50): 0,
-        (300, 10): 0,
-        (900, 1): 0,
-        (2000, 150): 0
-    })
-    m = 5000
-    n = 24
-    MAX_POPULATION = n
-    return items, m, n
+    items = OrderedDict({(11, 1): 0, (31, 21): 0, (33, 23): 0, (43, 33): 0, (53, 43): 0, (55, 45): 0, (65, 55): 0})
 
-
-def pseudo_user2():
-    global MAX_POPULATION
-    items = OrderedDict({(3, 2): 0, (1, 5): 0, (2, 3): 0})
-    m = 5
-    n = 3
+    m, n = 110, 7
     MAX_POPULATION = n
     return items, m, n
 
@@ -196,36 +163,26 @@ def pseudo_user2():
 def knapsack(items, m, n):
     """Define program flow.
     1. Read user input and create initial item with zeroes
-    2. Generate population
+    2. Generate firtst population
     3. Sort population
     4. Make crossover with first 2 of the sorted population and append children to the population
     5. Generate up to MAX_POPULATION count new children and append them in population
     6. Choose 1 item from population on random. This item should be selected/unselected from the knapsack.
     DO NOT override the best item.
+
     7. CYCLE Again
     """
     population = generate_pop(items, population=[])
     i = 0
     while i < MAX_ITERATIONS:
-        # sorted population
-        # population = sorted(
-        #     population,
-        #     key=lambda child: fitness_function(child, m),
-        #     reverse=True)
-        new_population = list()
+        new_population = []
         global MAX_POPULATION
-        for _ in range(int(MAX_POPULATION / 2)):
-            # selected parents
+        for _ in range(MAX_POPULATION // 2):
             best_parents = [select_parents(population, m), select_parents(population, m)]
 
-            # the best couple of items
             new_population.extend(do_crossover(best_parents, population))
 
-            # Step 5
-            #population = generate_pop(items, population=population)
-
         population = new_population
-        # Step 6:
         population = mutate_population(population, m)
         i += 1
         total_value = is_solution(population, m, n)
@@ -238,11 +195,11 @@ def knapsack(items, m, n):
 
 
 def main():
-    items, m, n = pseudo_user1()
-    #items, m, n = read_user_input()
+    items, m, n = pseudo_user()
+    # items, m, n = read_user_input()
     start = time()
     print(knapsack(items, m, n))
-    print((time() - start)*1000, 's')
+    print((time() - start), 's')
 
 if __name__ == '__main__':
     main()
