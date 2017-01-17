@@ -42,7 +42,7 @@ def get_population_cost(population, m):
 
 
 def generate_pop(items, population=[]):
-    """Generate new populations unitl MAX_POPULATION number is reached of
+    """Generate new populations unitl MAX_POPULATION number is reached or
     MAX_POPULATION iterations are made."""
     global POPULATION_COUNTER
     i = MAX_POPULATION
@@ -124,6 +124,8 @@ def is_solution(population, m, n):
 
 
 def select_parents(population, m):
+    """Select randomly parents for the new population from sorted by
+    fitness function existing population."""
     fitness_population = sorted(
         population,
         key=lambda child: fitness_function(child, m),
@@ -163,14 +165,12 @@ def pseudo_user1():
 def knapsack(items, m, n):
     """Define program flow.
     1. Read user input and create initial item with zeroes
-    2. Generate firtst population
-    3. Sort population
-    4. Make crossover with first 2 of the sorted population and append children to the population
-    5. Generate up to MAX_POPULATION count new children and append them in population
-    6. Choose 1 item from population on random. This item should be selected/unselected from the knapsack.
-    DO NOT override the best item.
+    2. Generate first population
+    3. Evaluate the fitness of each member of the population
+    4. Select members from the population with a probability proportional to their fitness for a breeding pool
+    5. Select pairs from the breeding pool at random and perform a cross over operation at random to give the new population
 
-    7. CYCLE Again
+    6. CYCLE Again 3-5
     """
     population = generate_pop(items, population=[])
     i = 0
