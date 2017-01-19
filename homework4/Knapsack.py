@@ -48,6 +48,7 @@ def generate_pop(items, population=[]):
     i = MAX_POPULATION
     while len(population) < MAX_POPULATION and i > 0:
         new_child = OrderedDict([(item, randint(0, 1)) for item in items.keys()])
+        # print(new_child)
         total_value = sum([sel for sel in new_child.values()])
         if total_value:
             population.append(new_child)
@@ -118,6 +119,7 @@ def is_solution(population, m, n):
     selected = [item for item, sel in best.items() if sel]
     weight = sum([v for w, v in selected])
     total_value = sum([w for w, v in selected])
+    print(total_value)
     if sum(best.values()) <= n and weight <= m:
         return total_value
     return False
@@ -162,6 +164,19 @@ def pseudo_user1():
     return items, m, n
 
 
+def pseudo_user2():
+    global MAX_POPULATION
+    items = OrderedDict({
+        (150, 90): 0, (35, 130): 0, (200, 1530): 0, (160, 500): 0, (60, 150): 0, (45, 680): 0,
+        (60, 270): 0, (40, 390): 0, (30, 230): 0, (10, 520): 0, (70, 110): 0, (30, 320): 0,
+        (15, 240): 0, (10, 480): 0, (40, 730): 0, (70, 420): 0, (75, 430): 0, (80, 220): 0,
+        (20, 70): 0, (12, 180): 0, (50, 40): 0, (10, 300): 0, (1, 900): 0, (150, 2000): 0})
+
+    m, n = 5000, 24
+    MAX_POPULATION = n
+    return items, m, n
+
+
 def knapsack(items, m, n):
     """Define program flow.
     1. Read user input and create initial item with zeroes
@@ -195,7 +210,7 @@ def knapsack(items, m, n):
 
 
 def main():
-    items, m, n = pseudo_user()
+    items, m, n = pseudo_user2()
     # items, m, n = read_user_input()
     start = time()
     print(knapsack(items, m, n))
