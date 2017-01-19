@@ -1,4 +1,5 @@
 import csv
+import pprint
 from math import log2
 from random import sample
 
@@ -46,6 +47,9 @@ def build_tree(old_attributes, data):
     attributes_order = []
     root_id = None
     while len(attributes):
+        print(attributes, current_id)
+        if current_id >= len(attributes):
+            current_id = -1
         attributes.pop(current_id)
         all_gains = {}
 
@@ -137,17 +141,17 @@ def get_results(tree, test_data, attributes, attributes_order, end_values):
         current_node = None
         for attr in attributes_order:
             val = attributes[attr]
-            print('Looking for "{}"'.format(val))
+            # print('Looking for "{}"'.format(val))
             if tree.get(val, None) in attributes:
-                print('GO Inside')
+                # print('GO Inside')
                 current_node = tree.get(attributes[attr], {})
             else:
-                print(tree.get(attributes[attr], {}))
+                # print(tree.get(attributes[attr], {}))
                 current_node = tree.get(attributes[attr], {}).get(test[attr], {})
-                print(current_node)
-            if current_node in end_values:
-                print('Found!!!', current_node)
-                res[test] = current_node
+                # print(current_node)
+            if current_node and current_node in end_values:
+                # print('Found!!!', current_node)
+                res[tuple(test)] = (current_node, test[-1], test[-1] == current_node)
                 break
     return res
 
@@ -189,35 +193,14 @@ def main1():
     data = read_data('data.csv')
 
     trainers, test_data = get_test_data(data)
-
-    data = [
-        ('male', 0, 'cheap', 'low', 'bus'),
-        ('male', 1, 'cheap', 'medium', 'bus'),
-        ('female', 1, 'cheap', 'medium', 'train'),
-        ('female', 0, 'cheap', 'low', 'bus'),
-        ('male', 1, 'cheap', 'medium', 'bus'),
-        ('male', 0, 'standard', 'medium', 'train'),
-        ('female', 1, 'standard', 'medium', 'train'),
-        ('female', 1, 'expensive', 'high', 'car'),
-        ('male', 2, 'expensive', 'medium', 'car'),
-        ('female', 2, 'expensive', 'high', 'car')
-    ]
-
-    test_data = [
-        ('male', 1, 'standard', 'high', ''),  # Alex  =>  train
-        ('male', 0, 'cheap', 'medium', ''),  # Buddy  =>  bus
-        ('female', 1, 'cheap', 'high', '')  # Cherry  =>  train
-    ]
+    print(test_data)
 
     end_values = set([i[len(i) - 1] for i in data])
     print(end_values)
 
     tree, attributes_order = build_tree(attributes, data)
-    print(attributes_order)
-    print('***************************************************************************************')
     # get result
-    print(get_results(tree, test_data, attributes, attributes_order, end_values))
-
+    pprint.pprint(get_results(tree, test_data, attributes, attributes_order, end_values))
 
 
 if __name__ == '__main__':
