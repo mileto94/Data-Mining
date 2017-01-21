@@ -160,15 +160,16 @@ def main():
     ]
 
     test_data = [
-        ('male', 1, 'standard', 'high', ''),  # Alex  =>  train
-        ('male', 0, 'cheap', 'medium', ''),  # Buddy  =>  bus
-        ('female', 1, 'cheap', 'high', '')  # Cherry  =>  train
+        ('male', 1, 'standard', 'high', 'train'),  # Alex  =>  train
+        ('male', 0, 'cheap', 'medium', 'bus'),  # Buddy  =>  bus
+        ('female', 1, 'cheap', 'high', 'train')  # Cherry  =>  train
     ]
 
     end_values = set([i[len(i) - 1] for i in data])
     print(end_values)
 
     tree, attributes_order = build_tree(attributes, data)
+    pprint.pprint(tree)
     print(attributes_order)
     print('***************************************************************************************')
     # get result
