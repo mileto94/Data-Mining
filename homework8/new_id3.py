@@ -139,7 +139,7 @@ def get_results(tree, test_data, attributes, attributes_order, end_values):
                 break
         count = count + 1 if test[-1] == current_node else count
     accuracy = 100 * count / len(test_data)
-    print('Accuracy: {}%'.format(accuracy))
+    print('Accuracy: {accuracy:.2f}%'.format(accuracy=accuracy))
     return res, accuracy
 
 
@@ -176,9 +176,9 @@ def main():
 
 
 def main1():
-    count = 0
+    count = 3
     res = []
-    while count < 3:
+    for _ in range(count):
         attributes = read_data('attributes.csv')[0]
         data = read_data('data.csv')
 
@@ -196,9 +196,10 @@ def main1():
         results, accuracy = get_results(tree, test_data, attributes, attributes_order, end_values)
         # pprint.pprint(results)
         res.append(accuracy)
-        count += 1
-    print(count)
-    print(sum(res) / (count))
+
+    print()
+    print('Runned {count} times with accuracy {accuracy:.2f}%'.format(
+        count=count, accuracy=sum(res) / count))
 
 
 if __name__ == '__main__':
